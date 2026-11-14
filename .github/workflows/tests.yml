@@ -1,0 +1,29 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  offline:
+    # Offline suite: primitives vs Node crypto/zlib, webhook vs upstream, openssl round trips.
+    # The Duktape integration test needs containers and runs manually (test/env.sh, test/integration_test.sh).
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq python3-yaml xxd openssl gzip
+      - name: Build and verify dist is up to date
+        run: |
+          python3 -I build.py
+          git diff --exit-code dist/
+      - name: Run tests
+        run: ./run_tests.sh

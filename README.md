@@ -1,5 +1,7 @@
 # Pushover (E2E) – Zabbix media type with end-to-end encryption
 
+[![tests](https://github.com/toffelwurst/zabbix-pushover-e2e/actions/workflows/tests.yml/badge.svg)](https://github.com/toffelwurst/zabbix-pushover-e2e/actions/workflows/tests.yml)
+
 The official Zabbix 8.0 Pushover webhook, extended with optional **end-to-end encryption**
 as documented by Pushover (<https://pushover.net/api#e2ee>). With a key configured, Zabbix
 encrypts `title`, `message` and `url` before sending (`url_title` is left out, see *Length limits*). Pushover's servers only see
@@ -110,9 +112,13 @@ message as Zabbix rendered it (plaintext). To see what actually goes over the wi
 - **Key storage:** use a secret macro. Zabbix does not show secret macro values in the frontend or API. But a
   global macro is resolved in many places: anyone who can configure objects that resolve global macros
   (media types, items, scripts, …) may be able to get the value out. Treat those permissions as access to the key.
+- **Side channels:** the AES implementation uses lookup tables and is not constant-time. That matters only if an
+  attacker can measure the Zabbix server's execution time of a webhook with high precision, which is not a
+  realistic position here; it is mentioned for completeness.
+- **Performance:** one alert with maximum-size fields takes about 25-30 ms in Zabbix 8.0's Duktape engine.
 - The crypto code is tested against Node's `crypto`/`zlib`, against `openssl`, with a FIPS-197 AES test
-  vector and in the real Zabbix engine (see *Tests*). It went through two independent automated code reviews,
-  but **no human security audit**.
+  vector and in the real Zabbix engine (see *Tests*). It went through independent automated code reviews,
+  but **no human security audit**. To report a vulnerability, see `SECURITY.md`.
 
 ## Length limits apply to the encrypted string
 Pushover truncates long plaintext fields itself but **rejects encrypted fields that exceed the limits**. The webhook

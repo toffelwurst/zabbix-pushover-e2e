@@ -451,7 +451,11 @@ var PushoverE2E = (function () {
 	function encryptFieldLimited(keyHex, plaintext, context, limit) {
 		var max = maxPlainBytes(limit);
 
-		return encryptField(keyHex, (max >= 0) ? truncateUtf8(plaintext, max) : plaintext, context);
+		if (max < 0) {
+			throw 'no plaintext fits into ' + limit + ' encrypted characters';
+		}
+
+		return encryptField(keyHex, truncateUtf8(plaintext, max), context);
 	}
 
 	/*

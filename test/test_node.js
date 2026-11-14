@@ -116,6 +116,11 @@ for (const limit of [250, 512, 1024]) {
 	}
 	check(`fit sweep limit ${limit}: max encrypted length ${worst}`, worst <= limit);
 }
+{
+	let threw = false;
+	try { E2E.encryptFieldLimited(k2, 'x', 'c', 100); } catch (e) { threw = /no plaintext fits/.test(String(e)); }
+	check('encryptFieldLimited: impossible limit (100) throws instead of exceeding it', threw);
+}
 check('truncateUtf8 with less room than the ellipsis cuts without it',
 	E2E.truncateUtf8('abcdef', 2) === 'ab' && E2E.truncateUtf8('🔥🔥', 3) === '…' && E2E.truncateUtf8('🔥🔥', 2) === '');
 
