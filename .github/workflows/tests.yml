@@ -3,6 +3,7 @@ name: tests
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -27,3 +28,29 @@ jobs:
           git diff --exit-code dist/
       - name: Run tests
         run: ./run_tests.sh
+
+  integration:
+    # Real alert flow in a throwaway Zabbix 8.0 (Duktape engine) with a fake Pushover endpoint:
+    # non-ASCII trigger name, over-long emoji title (truncation inside Duktape), all fields decrypted with openssl.
+    needs: offline
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CONTAINER_ENGINE: docker
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install test dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xxd openssl gzip
+      - name: Start throwaway Zabbix
+        run: test/env.sh up
+      - name: Integration test
+        run: test/integration_test.sh
+      - name: Container logs on failure
+        if: failure()
+        run: for c in zbx-server zbx-web zbx-echo zbx-agent; do echo "=== $c"; docker logs --tail 80 $c 2>&1 || true; done
+      - name: Tear down
+        if: always()
+        run: test/env.sh down
+

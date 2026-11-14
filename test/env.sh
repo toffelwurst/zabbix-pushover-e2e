@@ -5,7 +5,8 @@
 #                       "testpc" and a fake Pushover endpoint "echo" (logs requests to test/.echo/requests.jsonl)
 #   test/env.sh down    remove containers, volume and network
 #
-# CONTAINER_ENGINE=podman (default) or docker.  ZBX_TAG=alpine-8.0-latest (default) or e.g. alpine-7.0-latest.
+# CONTAINER_ENGINE=podman (default) or docker.  ZBX_TAG=alpine-8.0-latest (default).
+# VOLUME_LABEL: SELinux relabel option for bind mounts, default ",Z" with podman and none with docker.
 # WEB_IMAGE overrides the frontend image, see test/Containerfile.web-apparmor for hosts whose AppArmor profile
 # "php-fpm" blocks php-fpm inside the container (seen on Nobara/Fedora with rootless podman).
 # Never point the tests at a production Zabbix: they log in with the default Admin password and create/delete objects.
@@ -15,6 +16,7 @@ TAG=${ZBX_TAG:-alpine-8.0-latest}
 WEB=${WEB_IMAGE:-docker.io/zabbix/zabbix-web-nginx-pgsql:$TAG}
 N=zbxtest
 HERE=$(cd "$(dirname "$0")" && pwd)
+if [ "$E" = podman ]; then L=${VOLUME_LABEL-,Z}; else L=${VOLUME_LABEL-}; fi
 DB=(-e POSTGRES_USER=zabbix -e POSTGRES_PASSWORD=zabbix -e POSTGRES_DB=zabbix)
 
 down() {
@@ -32,7 +34,7 @@ up() {
 		docker.io/zabbix/zabbix-server-pgsql:$TAG >/dev/null
 	$E run -d --name zbx-web --network $N -p 127.0.0.1:8081:8080 "${DB[@]}" -e DB_SERVER_HOST=db \
 		-e ZBX_SERVER_HOST=server -e PHP_TZ=UTC "$WEB" >/dev/null
-	$E run -d --name zbx-echo --network $N --network-alias echo -v "$HERE:/t:ro,Z" -v "$HERE/.echo:/data:Z" \
+	$E run -d --name zbx-echo --network $N --network-alias echo -v "$HERE:/t:ro$L" -v "$HERE/.echo:/data${L:+:${L#,}}" \
 		docker.io/library/python:3-alpine python3 /t/echo_server.py /data/requests.jsonl >/dev/null
 	# the server creates the schema on first start; wait until the API can log in (frontend alone is not enough)
 	echo -n 'waiting for Zabbix (schema creation takes a minute) '
