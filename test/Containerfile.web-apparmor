@@ -1,0 +1,9 @@
+# Test helper only: on some hosts (seen on Nobara/Fedora with rootless podman) the host AppArmor profile
+# "php-fpm" attaches by path to /usr/sbin/php-fpm* - also inside containers - and php-fpm fails with
+# "Permission denied". Moving the binary to another path avoids the profile.
+#   podman build -t localhost/zbx-web-test -f test/Containerfile.web-apparmor test/
+#   WEB_IMAGE=localhost/zbx-web-test test/env.sh up
+FROM docker.io/zabbix/zabbix-web-nginx-pgsql:alpine-8.0-latest
+USER 0
+RUN mkdir -p /opt/fpm && mv /usr/sbin/php-fpm85 /opt/fpm/fpm85 && ln -s /opt/fpm/fpm85 /usr/sbin/php-fpm85
+USER 1997

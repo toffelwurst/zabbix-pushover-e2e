@@ -1,0 +1,20 @@
+Pushover (E2E) – Zabbix media type with end-to-end encryption
+SPDX-License-Identifier: AGPL-3.0-only
+
+Copyright (C) 2026 toffelwurst
+
+This work is a modified version of the official "Pushover" media type shipped with Zabbix 8.0
+(templates/media/pushover in the Zabbix source tree), Copyright (C) 2001-2026 Zabbix SIA,
+licensed under the GNU Affero General Public License, version 3.
+
+Modifications (2026-11): added end-to-end encryption (src/pushover_e2e_lib.js and the patch in build.py),
+the parameters e2e_key and priority_resolved, the build and the tests. The generated
+dist/media_pushover_e2e.yaml carries a modification notice in its description.
+
+upstream_media_pushover_8.0.yaml is the upstream media type, exported unmodified from Zabbix 8.0.0.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public
+License for more details.
+
+Pushover is a trademark of Pushover, LLC. This project is not affiliated with Pushover, LLC or Zabbix SIA.
