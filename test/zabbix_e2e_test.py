@@ -128,9 +128,15 @@ def fire(t, log, desc):
     else:
         alerts = call('alert.get', {'output': ['status', 'error'], 'sortfield': 'alertid', 'sortorder': 'DESC', 'limit': 3}, t)
         raise SystemExit(f'no request received; recent alerts: {alerts}')
-    # plaintext reference comes from Zabbix itself (alert.get returns the rendered subject/message)
-    al = call('alert.get', {'output': ['subject', 'message', 'status', 'error', 'eventid'], 'sortfield': 'alertid',
-                            'sortorder': 'DESC', 'limit': 1}, t)[0]
+    # plaintext reference comes from Zabbix itself (alert.get returns the rendered subject/message).
+    # The fake endpoint logs the request before Zabbix has written the alert status (alerter -> alert manager
+    # -> alert syncer), so wait until the status is final instead of reading it right away.
+    for _ in range(30):
+        al = call('alert.get', {'output': ['subject', 'message', 'status', 'error', 'eventid'], 'sortfield': 'alertid',
+                                'sortorder': 'DESC', 'limit': 1}, t)[0]
+        if al['status'] in ('1', '2'):
+            break
+        time.sleep(2)
     return req, al, tr
 
 
