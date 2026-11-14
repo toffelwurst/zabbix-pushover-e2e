@@ -12,6 +12,9 @@ With `e2e_key` set to `off` the webhook behaves exactly like the official one.
 > Status: tested offline, in Zabbix 8.0 (Duktape engine) and live against the Pushover API and app.
 > In production use since November 2026 on Zabbix 8.0.0. Small, dependency-free, **not audited by a third party**.
 
+Upstream feature request: [ZBXNEXT-10909](https://support.zabbix.com/browse/ZBXNEXT-10909) – optional e2ee in the
+official Pushover media type, with this repository as a proof of concept.
+
 ## Why a separate media type?
 - The official Zabbix Pushover webhook does not support Pushover e2ee.
 - The Zabbix webhook JavaScript engine (Duktape) has no AES, no gzip and no secure random generator
