@@ -159,7 +159,8 @@ Keep Zabbix message templates short when using encryption.
 3. **openssl round trip:** every ciphertext is decrypted using only `openssl`, `xxd` and `gzip`, following
    Pushover's documented scheme. The HMAC is verified first, and a tampered sample must be rejected.
 
-**Integration test** in a throwaway Zabbix (podman or docker, ~2 GB of images). Runs the real alert flow in
+**Integration test** in a throwaway Zabbix (podman or docker, ~2 GB of images). GitHub Actions runs it on every
+push after the offline suite (job `integration`, docker). Runs the real alert flow in
 Zabbix's Duktape engine with a non-ASCII trigger name and with an over-long emoji title (truncation inside
 Duktape), checks status, priority and the encrypted flag, and decrypts all fields with openssl:
 ```bash
