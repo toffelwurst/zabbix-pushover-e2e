@@ -14,8 +14,8 @@ jobs:
     # The Duktape integration test needs containers and runs manually (test/env.sh, test/integration_test.sh).
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
       - name: Install test dependencies
@@ -38,7 +38,7 @@ jobs:
     env:
       CONTAINER_ENGINE: docker
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install test dependencies
         run: |
           sudo apt-get update -qq
@@ -46,10 +46,18 @@ jobs:
       - name: Start throwaway Zabbix
         run: test/env.sh up
       - name: Integration test
-        run: test/integration_test.sh
-      - name: Container logs on failure
+        run: |
+          set -o pipefail
+          test/integration_test.sh 2>&1 | tee integration.log
+      - name: Diagnostics on failure
         if: failure()
-        run: for c in zbx-server zbx-web zbx-echo zbx-agent; do echo "=== $c"; docker logs --tail 80 $c 2>&1 || true; done
+        run: |
+          # job logs need repo admin rights to download; annotations are public, so surface the essentials there
+          enc() { python3 -c 'import sys; print(sys.stdin.read()[-3500:].replace("%","%25").replace("\r","").replace("\n","%0A"))'; }
+          echo "::error title=integration output::$( (tail -n 40 integration.log 2>/dev/null || echo 'no output') | enc)"
+          for c in zbx-server zbx-web zbx-echo zbx-agent; do
+            echo "::error title=logs $c::$(docker logs --tail 25 $c 2>&1 | enc)"
+          done
       - name: Tear down
         if: always()
         run: test/env.sh down
